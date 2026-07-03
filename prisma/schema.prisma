@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 enum TeamMember {
@@ -30,19 +30,19 @@ enum PipelineStatus {
 }
 
 model Lead {
-  id             String         @id @default(cuid())
-  name           String
-  category       String
-  address        String?
-  phone          String?
-  googlePlaceId  String?        @unique
-  websiteUrl     String?
-  websiteStatus  WebsiteStatus  @default(UNKNOWN)
-  pipelineStatus PipelineStatus @default(NEW)
-  assignedTo     TeamMember     @default(ANAMIKA)
-  notes          String?
-  rating         Float?
+  id              String         @id @default(cuid())
+  name            String
+  category        String
+  address         String?
+  phone           String?
+  googlePlaceId   String?        @unique
+  websiteUrl      String?
+  websiteStatus   WebsiteStatus  @default(UNKNOWN)
+  pipelineStatus  PipelineStatus @default(NEW)
+  assignedTo      TeamMember     @default(ANAMIKA)
+  notes           String?
+  rating          Float?
   lastContactedAt DateTime?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 }
