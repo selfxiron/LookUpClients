@@ -2,6 +2,7 @@ import { geocodeLocation } from "./geocode";
 import { searchGeoapifyPlacesInBbox } from "./geoapify-places";
 import { searchOsmPlacesInBbox } from "./osm-places";
 import type { PlaceResult } from "./types";
+import { enrichPlacesFromWikidata } from "./wikidata";
 
 function normalizeName(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, " ");
@@ -46,8 +47,18 @@ export async function searchPlaces(
     sources.push("geoapify");
   }
 
+  const merged = mergePlaceResults(osmResults, geoResults);
+  const wikidataByPlaceId = new Map<string, string>();
+  for (const place of merged) {
+    if (place.wikidataId) {
+      wikidataByPlaceId.set(place.placeId, place.wikidataId);
+    }
+  }
+
+  const enriched = await enrichPlacesFromWikidata(merged, wikidataByPlaceId);
+
   return {
-    results: mergePlaceResults(osmResults, geoResults),
+    results: enriched.map(({ wikidataId: _wikidataId, ...place }) => place),
     sources,
   };
 }

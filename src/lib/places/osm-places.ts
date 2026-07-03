@@ -169,7 +169,14 @@ function buildAddress(tags: Record<string, string>): string | null {
 }
 
 function extractWebsite(tags: Record<string, string>): string | null {
-  return tags.website ?? tags["contact:website"] ?? tags.url ?? null;
+  return (
+    tags.website ??
+    tags["contact:website"] ??
+    tags["contact:website:en"] ??
+    tags.url ??
+    tags["website:en"] ??
+    null
+  );
 }
 
 function extractPhone(tags: Record<string, string>): string | null {
@@ -257,6 +264,7 @@ export async function searchOsmPlacesInBbox(
       rating: null,
       category,
       source: "openstreetmap",
+      wikidataId: tags.wikidata ?? null,
     };
   });
 }

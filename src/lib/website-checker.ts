@@ -19,12 +19,15 @@ export function isSocialUrl(url: string): boolean {
   );
 }
 
-/** Fast status from URL tags only — used during search to avoid slow HTTP checks. */
+/**
+ * Infer status from listed URLs only (no live HTTP).
+ * Missing map data must be UNKNOWN — absence of a website tag does not mean no website.
+ */
 export function inferWebsiteStatus(
   websiteUrl: string | null | undefined,
 ): { status: WebsiteStatus; url: string | null } {
   if (!websiteUrl?.trim()) {
-    return { status: "NO_WEBSITE", url: null };
+    return { status: "UNKNOWN", url: null };
   }
 
   const url = websiteUrl.trim();
@@ -32,7 +35,7 @@ export function inferWebsiteStatus(
     return { status: "SOCIAL_ONLY", url };
   }
 
-  return { status: "UNKNOWN", url };
+  return { status: "HAS_WEBSITE", url };
 }
 
 export async function checkWebsiteStatus(

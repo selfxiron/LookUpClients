@@ -16,7 +16,12 @@ import { BUSINESS_CATEGORIES } from "@/lib/constants";
 import { WebsiteStatusBadge } from "@/components/website-status-badge";
 import type { PlaceResult } from "@/lib/places/types";
 
-type WebsiteFilter = "ALL" | "NO_WEBSITE" | "SOCIAL_ONLY" | "HAS_WEBSITE";
+type WebsiteFilter =
+  | "ALL"
+  | "NO_WEBSITE"
+  | "SOCIAL_ONLY"
+  | "HAS_WEBSITE"
+  | "UNKNOWN";
 
 export default function SearchPage() {
   const [location, setLocation] = useState("");
@@ -114,8 +119,9 @@ export default function SearchPage() {
             Search local businesses and find those without a proper website
           </p>
           <p className="mt-2 text-xs text-zinc-400">
-            Combines OpenStreetMap + Geoapify. Coverage varies by city — for
-            best results in India, also use{" "}
+            Combines OpenStreetMap + Geoapify. &quot;Not listed&quot; means no
+            website in map data — verify on Google before outreach. For best
+            coverage in India, also use{" "}
             <Link href="/leads/new" className="underline">
               Add from Google Maps
             </Link>
@@ -248,6 +254,7 @@ export default function SearchPage() {
                 <option value="NO_WEBSITE">No website only</option>
                 <option value="SOCIAL_ONLY">Social only</option>
                 <option value="HAS_WEBSITE">Has website</option>
+                <option value="UNKNOWN">Not listed in maps</option>
               </select>
             </div>
           </div>

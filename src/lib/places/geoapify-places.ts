@@ -18,8 +18,7 @@ const CATEGORY_MAP: Record<string, string> = {
   restaurant: "catering.restaurant,catering.fast_food,catering.food_court",
   clinic:
     "healthcare.clinic_or_praxis,healthcare.dentist,healthcare.pharmacy,healthcare.hospital",
-  school:
-    "education.school,education.kindergarten,education.college,education.university",
+  school: "education.school,education.college,education.university",
   coaching:
     "education.college,education.school,education.university,office.educational_institution",
   salon:
