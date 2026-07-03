@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Search,
   Users,
   Target,
+  LogOut,
 } from "lucide-react";
 
 const navItems = [
@@ -17,6 +18,13 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  }
 
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-zinc-200 bg-white">
@@ -62,6 +70,14 @@ export function Sidebar() {
           <p>Anamika — Outreach</p>
           <p>Jeet — Development</p>
         </div>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="mt-4 inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900"
+        >
+          <LogOut className="h-4 w-4" />
+          Sign out
+        </button>
       </div>
     </aside>
   );

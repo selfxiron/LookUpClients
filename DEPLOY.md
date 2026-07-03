@@ -47,6 +47,7 @@ npm run db:studio
 |---|---|
 | `DATABASE_URL` | Your Neon pooled connection string |
 | `GEOAPIFY_API_KEY` | Your Geoapify Places API key |
+| `APP_ACCESS_PASSWORD` | Shared team password for login |
 | `NOMINATIM_USER_AGENT` | `LookUpClients/1.0 (your-email@example.com)` (optional) |
 
 6. Click **Deploy**.
@@ -61,9 +62,10 @@ Migrations apply automatically on each deploy.
 
 ## 4. After deploy
 
-- Visit your Vercel URL (e.g. `https://lookup-clients.vercel.app`).
-- Test **Find Clients**, **Add Lead**, and **Leads** — data now lives in Neon Postgres.
-- Share the URL with Anamika.
+- Visit your Vercel URL (e.g. `https://look-up-clients.vercel.app`).
+- You should see a **login page** — enter `APP_ACCESS_PASSWORD`.
+- Share the URL and password with Anamika only.
+- Test **Find Clients**, **Add Lead**, and **Leads** — data lives in Neon Postgres.
 
 ## Local development (after switching to Neon)
 
