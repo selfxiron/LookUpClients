@@ -8,9 +8,13 @@
    - Use the **Pooled** connection (recommended for Vercel/serverless).
    - Prisma tip: Neon also shows a **Prisma**-formatted URL — use that if available.
 
-Example format:
+Example formats:
 
 ```
+# Pooled — use for DATABASE_URL (app runtime on Vercel)
+postgresql://user:password@ep-xxxx-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+
+# Direct — optional DIRECT_URL (migrations); auto-derived from pooled URL if omitted
 postgresql://user:password@ep-xxxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
 ```
 
@@ -45,7 +49,8 @@ npm run db:studio
 
 | Name | Value |
 |---|---|
-| `DATABASE_URL` | Your Neon pooled connection string |
+| `DATABASE_URL` | Your Neon **pooled** connection string (`-pooler` in hostname) |
+| `DIRECT_URL` | Neon **direct** connection (optional — derived from pooled URL during build) |
 | `GEOAPIFY_API_KEY` | Your Geoapify Places API key |
 | `APP_ACCESS_PASSWORD` | Shared team password for login |
 | `NOMINATIM_USER_AGENT` | `LookUpClients/1.0 (your-email@example.com)` (optional) |
@@ -55,10 +60,10 @@ npm run db:studio
 The build runs:
 
 ```bash
-prisma generate && prisma migrate deploy && next build
+prisma generate && PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK=1 prisma migrate deploy && next build
 ```
 
-Migrations apply automatically on each deploy.
+Migrations apply automatically on each deploy. Advisory locking is disabled during deploy because Neon's Postgres does not reliably support Prisma's session locks (P1002); this is safe for single-instance Vercel builds.
 
 ## 4. After deploy
 
@@ -81,9 +86,11 @@ npm run dev
 
 ## Troubleshooting
 
-**Build fails on `prisma migrate deploy`**
-- Check `DATABASE_URL` is set in Vercel env vars.
-- Ensure the Neon project is active (free tier sleeps after inactivity — wake it by opening the Neon dashboard).
+**Build fails on `prisma migrate deploy` with P1002 (timeout)**
+- Use Neon’s **pooled** URL for `DATABASE_URL` (must include `-pooler` in hostname).
+- Migrations auto-use a direct connection (or set `DIRECT_URL` explicitly).
+- The Vercel build sets `PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK=1` because Neon does not reliably support Prisma’s advisory locks.
+- Ensure the Neon project is awake (free tier sleeps — open the Neon dashboard before redeploying).
 
 **`DATABASE_URL is not set` at runtime**
 - Redeploy after adding env vars in Vercel → Settings → Environment Variables.
