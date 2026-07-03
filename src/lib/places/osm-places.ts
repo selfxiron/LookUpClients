@@ -86,6 +86,14 @@ const CATEGORY_FILTERS: Record<string, string[]> = {
     '["tourism"="hostel"]',
     '["tourism"="motel"]',
   ],
+  media_studio: [
+    '["shop"="photo"]',
+    '["craft"="photographer"]',
+    '["shop"="camera"]',
+    '["office"="media"]',
+    '["amenity"="studio"]["name"~"photo|video|film|media|production|studio",i]',
+    '["craft"="photographer"]["name"~"video|film|media|studio",i]',
+  ],
 };
 
 async function geocodeLocation(location: string): Promise<NominatimResult> {

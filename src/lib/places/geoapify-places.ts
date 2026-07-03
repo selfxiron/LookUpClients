@@ -27,6 +27,8 @@ const CATEGORY_MAP: Record<string, string> = {
   gym: "sport.fitness.gym,sport.fitness.fitness_centre,sport.sports_centre",
   hotel:
     "accommodation.hotel,accommodation.guest_house,accommodation.hostel,accommodation.motel",
+  media_studio:
+    "commercial.hobby.photo,commercial.video_and_music,commercial.art,service.advertising.advertising_agency",
 };
 
 type GeoapifyFeature = {

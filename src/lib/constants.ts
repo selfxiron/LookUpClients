@@ -7,6 +7,7 @@ export const BUSINESS_CATEGORIES = [
   { value: "salon", label: "Salons & Spas" },
   { value: "gym", label: "Gyms & Fitness" },
   { value: "hotel", label: "Hotels" },
+  { value: "media_studio", label: "Photography & Media Studios" },
 ] as const;
 
 export const TEAM_MEMBERS = [
