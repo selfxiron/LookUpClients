@@ -1,13 +1,6 @@
-import { checkWebsiteStatus } from "../website-checker";
+import { inferWebsiteStatus } from "../website-checker";
 import { isJunkPlaceName } from "./filters";
 import type { Bbox, PlaceResult } from "./types";
-
-type NominatimResult = {
-  lat: string;
-  lon: string;
-  boundingbox: [string, string, string, string];
-  display_name: string;
-};
 
 type OsmElement = {
   type: "node" | "way" | "relation";
@@ -22,8 +15,6 @@ type OverpassResponse = {
   elements?: OsmElement[];
   remark?: string;
 };
-
-const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 
 const OVERPASS_ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
@@ -96,34 +87,6 @@ const CATEGORY_FILTERS: Record<string, string[]> = {
   ],
 };
 
-async function geocodeLocation(location: string): Promise<NominatimResult> {
-  const params = new URLSearchParams({
-    q: location,
-    format: "json",
-    limit: "1",
-    addressdetails: "1",
-  });
-
-  const response = await fetch(`${NOMINATIM_URL}?${params}`, {
-    headers: { "User-Agent": USER_AGENT },
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to geocode location. Please try again.");
-  }
-
-  const results = (await response.json()) as NominatimResult[];
-
-  if (!results.length) {
-    throw new Error(
-      `Could not find "${location}". Try adding a state or country, e.g. "Pune, Maharashtra" or "Mumbai, India".`,
-    );
-  }
-
-  return results[0];
-}
-
 function buildOverpassQueryForBbox(
   bbox: Bbox,
   filters: string[],
@@ -136,11 +99,11 @@ function buildOverpassQueryForBbox(
     )
     .join("\n");
 
-  return `[out:json][timeout:45];
+  return `[out:json][timeout:25];
 (
 ${queries}
 );
-out center 100 tags;`;
+out center 80 tags;`;
 }
 
 async function queryOverpass(query: string): Promise<OsmElement[]> {
@@ -239,23 +202,17 @@ function osmQualityScore(tags: Record<string, string>): number {
   return score;
 }
 
-async function resolveWebsiteStatus(
-  tags: Record<string, string>,
-): Promise<{ url: string | null; status: PlaceResult["websiteStatus"] }> {
+function resolveWebsiteStatus(tags: Record<string, string>): {
+  url: string | null;
+  status: PlaceResult["websiteStatus"];
+} {
   const website = extractWebsite(tags);
   const social = extractSocialUrl(tags);
-  const urlToCheck = website ?? social;
-
-  if (!urlToCheck) {
-    return { url: null, status: "NO_WEBSITE" };
-  }
-
-  const result = await checkWebsiteStatus(urlToCheck);
-  return { url: result.url, status: result.status };
+  return inferWebsiteStatus(website ?? social);
 }
 
-export async function searchOsmPlaces(
-  location: string,
+export async function searchOsmPlacesInBbox(
+  bbox: Bbox,
   category: string,
 ): Promise<PlaceResult[]> {
   const filters = CATEGORY_FILTERS[category];
@@ -264,8 +221,6 @@ export async function searchOsmPlaces(
     throw new Error(`Unknown category: ${category}`);
   }
 
-  const geo = await geocodeLocation(location);
-  const bbox = geo.boundingbox.map(Number) as Bbox;
   const elements = await queryOverpass(buildOverpassQueryForBbox(bbox, filters));
 
   const seen = new Set<string>();
@@ -288,24 +243,20 @@ export async function searchOsmPlaces(
     return getElementName(a.tags ?? {}).localeCompare(getElementName(b.tags ?? {}));
   });
 
-  const results = await Promise.all(
-    uniqueElements.map(async (element): Promise<PlaceResult> => {
-      const tags = element.tags ?? {};
-      const websiteCheck = await resolveWebsiteStatus(tags);
+  return uniqueElements.map((element): PlaceResult => {
+    const tags = element.tags ?? {};
+    const websiteCheck = resolveWebsiteStatus(tags);
 
-      return {
-        placeId: `osm:${element.type}:${element.id}`,
-        name: getElementName(tags),
-        address: buildAddress(tags),
-        phone: extractPhone(tags),
-        websiteUrl: websiteCheck.url,
-        websiteStatus: websiteCheck.status,
-        rating: null,
-        category,
-        source: "openstreetmap",
-      };
-    }),
-  );
-
-  return results;
+    return {
+      placeId: `osm:${element.type}:${element.id}`,
+      name: getElementName(tags),
+      address: buildAddress(tags),
+      phone: extractPhone(tags),
+      websiteUrl: websiteCheck.url,
+      websiteStatus: websiteCheck.status,
+      rating: null,
+      category,
+      source: "openstreetmap",
+    };
+  });
 }

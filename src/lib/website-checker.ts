@@ -19,6 +19,22 @@ export function isSocialUrl(url: string): boolean {
   );
 }
 
+/** Fast status from URL tags only — used during search to avoid slow HTTP checks. */
+export function inferWebsiteStatus(
+  websiteUrl: string | null | undefined,
+): { status: WebsiteStatus; url: string | null } {
+  if (!websiteUrl?.trim()) {
+    return { status: "NO_WEBSITE", url: null };
+  }
+
+  const url = websiteUrl.trim();
+  if (isSocialUrl(url)) {
+    return { status: "SOCIAL_ONLY", url };
+  }
+
+  return { status: "UNKNOWN", url };
+}
+
 export async function checkWebsiteStatus(
   websiteUrl: string | null | undefined,
 ): Promise<{ status: WebsiteStatus; url: string | null }> {
@@ -34,7 +50,7 @@ export async function checkWebsiteStatus(
 
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+    const timeout = setTimeout(() => controller.abort(), 5000);
 
     const response = await fetch(url.startsWith("http") ? url : `https://${url}`, {
       method: "HEAD",
@@ -53,7 +69,7 @@ export async function checkWebsiteStatus(
   } catch {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
+      const timeout = setTimeout(() => controller.abort(), 5000);
 
       const response = await fetch(url.startsWith("http") ? url : `https://${url}`, {
         method: "GET",

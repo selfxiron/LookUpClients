@@ -28,6 +28,7 @@ export default function SearchPage() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [sources, setSources] = useState<string[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
 
   async function handleSearch(event: React.FormEvent) {
     event.preventDefault();
@@ -49,9 +50,11 @@ export default function SearchPage() {
 
       setResults(data.results);
       setSources(data.sources ?? ["openstreetmap"]);
+      setHasSearched(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Search failed");
       setResults([]);
+      setHasSearched(true);
     } finally {
       setLoading(false);
     }
@@ -111,7 +114,8 @@ export default function SearchPage() {
             Search local businesses and find those without a proper website
           </p>
           <p className="mt-2 text-xs text-zinc-400">
-            Combines OpenStreetMap + Geoapify. Not enough results?{" "}
+            Combines OpenStreetMap + Geoapify. Coverage varies by city — for
+            best results in India, also use{" "}
             <Link href="/leads/new" className="underline">
               Add from Google Maps
             </Link>
@@ -184,6 +188,36 @@ export default function SearchPage() {
       {error ? (
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
+        </div>
+      ) : null}
+
+      {hasSearched && !loading && !error && results.length === 0 ? (
+        <div className="mt-6 rounded-xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
+          <p className="text-sm font-medium text-zinc-800">No businesses found</p>
+          <p className="mt-2 text-sm text-zinc-500">
+            Try a larger city with state/country (e.g. &quot;Pune, Maharashtra&quot;)
+            or a different business type. OSM data is sparse in many Indian
+            cities — use{" "}
+            <Link href="/leads/new" className="font-medium text-zinc-900 underline">
+              Add Lead
+            </Link>{" "}
+            for Google Maps discoveries.
+          </p>
+        </div>
+      ) : null}
+
+      {hasSearched && !loading && !error && results.length > 0 && filteredResults.length === 0 ? (
+        <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-6 text-center">
+          <p className="text-sm text-amber-900">
+            {results.length} businesses found, but none match the &quot;{websiteFilter.replace("_", " ").toLowerCase()}&quot; filter.{" "}
+            <button
+              type="button"
+              onClick={() => setWebsiteFilter("ALL")}
+              className="font-medium underline"
+            >
+              Show all results
+            </button>
+          </p>
         </div>
       ) : null}
 

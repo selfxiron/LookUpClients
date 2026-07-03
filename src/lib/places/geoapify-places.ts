@@ -1,4 +1,4 @@
-import { checkWebsiteStatus } from "../website-checker";
+import { inferWebsiteStatus } from "../website-checker";
 import { isJunkPlaceName } from "./filters";
 import type { Bbox, PlaceResult } from "./types";
 
@@ -50,61 +50,25 @@ type GeoapifyResponse = {
   features?: GeoapifyFeature[];
 };
 
-type NominatimResult = {
-  boundingbox: [string, string, string, string];
-};
-
-async function geocodeBbox(location: string): Promise<Bbox> {
-  const params = new URLSearchParams({
-    q: location,
-    format: "json",
-    limit: "1",
-  });
-
-  const response = await fetch(
-    `https://nominatim.openstreetmap.org/search?${params}`,
-    {
-      headers: {
-        "User-Agent":
-          process.env.NOMINATIM_USER_AGENT ??
-          "LookUpClients/1.0 (client discovery tool)",
-      },
-      cache: "no-store",
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error("Geoapify geocoding failed");
-  }
-
-  const results = (await response.json()) as NominatimResult[];
-  if (!results.length) {
-    throw new Error("Location not found for Geoapify search");
-  }
-
-  return results[0].boundingbox.map(Number) as Bbox;
-}
-
 function bboxToGeoapifyRect(bbox: Bbox): string {
   const [south, north, west, east] = bbox;
   return `rect:${west},${south},${east},${north}`;
 }
 
-export async function searchGeoapifyPlaces(
-  location: string,
+export async function searchGeoapifyPlacesInBbox(
+  bbox: Bbox,
   category: string,
   apiKey: string,
 ): Promise<PlaceResult[]> {
   const categories = CATEGORY_MAP[category];
   if (!categories) return [];
 
-  const bbox = await geocodeBbox(location);
   const filter = bboxToGeoapifyRect(bbox);
 
   const params = new URLSearchParams({
     categories,
     filter,
-    limit: "100",
+    limit: "80",
     lang: "en",
     apiKey,
   });
@@ -122,33 +86,31 @@ export async function searchGeoapifyPlaces(
   if (data.message && !data.features?.length) {
     throw new Error(`Geoapify: ${data.message.slice(0, 200)}`);
   }
-  const features = data.features ?? [];
 
-  const results: PlaceResult[] = [];
+  return (data.features ?? [])
+    .flatMap((feature) => {
+      const props = feature.properties;
+      if (!props?.name || isJunkPlaceName(props.name)) return [];
 
-  for (const feature of features) {
-    const props = feature.properties;
-    if (!props?.name || isJunkPlaceName(props.name)) continue;
+      const address =
+        props.formatted ??
+        [props.address_line1, props.address_line2].filter(Boolean).join(", ") ??
+        null;
 
-    const address =
-      props.formatted ??
-      [props.address_line1, props.address_line2].filter(Boolean).join(", ") ??
-      null;
+      const websiteCheck = inferWebsiteStatus(props.website);
 
-    const websiteCheck = await checkWebsiteStatus(props.website);
-
-    results.push({
-      placeId: `geoapify:${props.place_id ?? props.name}`,
-      name: props.name,
-      address: address || null,
-      phone: props.phone ?? null,
-      websiteUrl: websiteCheck.url,
-      websiteStatus: websiteCheck.status,
-      rating: null,
-      category,
-      source: "geoapify",
+      return [
+        {
+          placeId: `geoapify:${props.place_id ?? props.name}`,
+          name: props.name,
+          address: address || null,
+          phone: props.phone ?? null,
+          websiteUrl: websiteCheck.url,
+          websiteStatus: websiteCheck.status,
+          rating: null,
+          category,
+          source: "geoapify" as const,
+        },
+      ];
     });
-  }
-
-  return results;
 }

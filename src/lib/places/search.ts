@@ -1,5 +1,6 @@
-import { searchGeoapifyPlaces } from "./geoapify-places";
-import { searchOsmPlaces } from "./osm-places";
+import { geocodeLocation } from "./geocode";
+import { searchGeoapifyPlacesInBbox } from "./geoapify-places";
+import { searchOsmPlacesInBbox } from "./osm-places";
 import type { PlaceResult } from "./types";
 
 function normalizeName(name: string): string {
@@ -27,29 +28,26 @@ export async function searchPlaces(
   location: string,
   category: string,
 ): Promise<{ results: PlaceResult[]; sources: string[] }> {
-  const osmResults = await searchOsmPlaces(location, category);
+  const { bbox } = await geocodeLocation(location);
+  const geoapifyKey = process.env.GEOAPIFY_API_KEY?.trim();
   const sources = ["openstreetmap"];
 
-  const geoapifyKey = process.env.GEOAPIFY_API_KEY?.trim();
-  if (!geoapifyKey) {
-    return { results: osmResults, sources };
+  const osmPromise = searchOsmPlacesInBbox(bbox, category);
+  const geoPromise = geoapifyKey
+    ? searchGeoapifyPlacesInBbox(bbox, category, geoapifyKey).catch((error) => {
+        console.error("Geoapify search failed:", error);
+        return [];
+      })
+    : Promise.resolve([]);
+
+  const [osmResults, geoResults] = await Promise.all([osmPromise, geoPromise]);
+
+  if (geoResults.length > 0) {
+    sources.push("geoapify");
   }
 
-  try {
-    const geoResults = await searchGeoapifyPlaces(
-      location,
-      category,
-      geoapifyKey,
-    );
-    if (geoResults.length > 0) {
-      sources.push("geoapify");
-    }
-    return {
-      results: mergePlaceResults(osmResults, geoResults),
-      sources,
-    };
-  } catch (error) {
-    console.error("Geoapify search failed:", error);
-    return { results: osmResults, sources };
-  }
+  return {
+    results: mergePlaceResults(osmResults, geoResults),
+    sources,
+  };
 }
