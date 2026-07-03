@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum TeamMember {
+  ANAMIKA
+  JEET
+}
+
+enum WebsiteStatus {
+  NO_WEBSITE
+  SOCIAL_ONLY
+  HAS_WEBSITE
+  UNREACHABLE
+  UNKNOWN
+}
+
+enum PipelineStatus {
+  NEW
+  CONTACTED
+  INTERESTED
+  PROPOSAL
+  WON
+  LOST
+}
+
+model Lead {
+  id             String         @id @default(cuid())
+  name           String
+  category       String
+  address        String?
+  phone          String?
+  googlePlaceId  String?        @unique
+  websiteUrl     String?
+  websiteStatus  WebsiteStatus  @default(UNKNOWN)
+  pipelineStatus PipelineStatus @default(NEW)
+  assignedTo     TeamMember     @default(ANAMIKA)
+  notes          String?
+  rating         Float?
+  lastContactedAt DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}

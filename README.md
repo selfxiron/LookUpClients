@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LookUpClients
 
-## Getting Started
+Internal client discovery tool for finding local businesses without proper websites and tracking outreach.
 
-First, run the development server:
+Built for a two-person web development team:
+- **Anamika** — finds and contacts potential clients
+- **Jeet** — builds applications and brands
+
+## Features (MVP)
+
+- Search businesses by location and type (cafes, clinics, schools, etc.)
+- Auto-detect website status: no website, social only, has website, unreachable
+- Save and manage leads in a simple CRM pipeline
+- Track pipeline stages: New → Contacted → Interested → Proposal → Won/Lost
+- Dashboard with hot lead counts and recent activity
+
+## Tech Stack
+
+- Next.js 16 (App Router)
+- TypeScript + Tailwind CSS
+- Prisma 7 + SQLite
+- **OpenStreetMap** (Nominatim + Overpass API) — completely free, no API key
+
+## Setup
+
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure environment
+
+```bash
+cp .env.example .env
+```
+
+No paid API keys required. Optionally set `NOMINATIM_USER_AGENT` in `.env` with your contact email (OpenStreetMap policy).
+
+### 3. Run database migrations
+
+```bash
+npm run db:migrate
+```
+
+### 4. Start the dev server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Go to **Find Clients** and search by city + business type
+2. Filter for **No Website** or **Social Only** — your best leads
+3. Click **Save Lead** on promising businesses
+4. Open the lead, add call notes, and update pipeline status
+5. Use **Mark Contacted Today** after each outreach call
 
-## Learn More
+## Data Source
 
-To learn more about Next.js, take a look at the following resources:
+Business listings come from [OpenStreetMap](https://www.openstreetmap.org/) via:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Nominatim** — converts city names to map coordinates (free)
+- **Overpass API** — fetches businesses in that area (free)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Trade-off vs Google Maps:** OSM is free but community-maintained, so some small local businesses may be missing or have incomplete phone/website info. Anamika can still add details manually in lead notes.
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+src/
+  app/
+    (dashboard)/     # Main app pages
+    api/             # Search, leads, website check
+  components/        # UI components
+  lib/               # Prisma, OSM search, website checker
+prisma/
+  schema.prisma      # Lead data model
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Next Steps
+
+- [ ] Add login for Jeet and Anamika
+- [ ] Follow-up reminders ("call back in 2 weeks")
+- [ ] Website quality scoring (outdated design, not mobile-friendly)
+- [ ] Export leads to CSV
+- [ ] Deploy to Vercel with PostgreSQL
