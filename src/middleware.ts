@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AUTH_COOKIE, getAccessPassword, isValidAuthToken } from "@/lib/auth";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   if (!getAccessPassword()) {
     return NextResponse.next();
   }
 
   const token = request.cookies.get(AUTH_COOKIE)?.value;
-  if (isValidAuthToken(token)) {
+  if (await isValidAuthToken(token)) {
     return NextResponse.next();
   }
 
